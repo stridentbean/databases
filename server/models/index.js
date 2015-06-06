@@ -11,6 +11,16 @@ var getConnection = function() {
     return dbConnection;
 }
 
+var query = function(qs, callback) {
+  var db = getConnection();
+  var q = db.query(qs, function(err, result) {
+    if (err) return console.error(err);
+    callback(result);
+  });
+  console.log(q.sql);
+  //db.query(queryString).then(function(){console.log(results)})
+};
+
 var getTable = function(tableName, callback) {
   var db = getConnection();
   var queryString = "SELECT * FROM " + tableName;
@@ -23,8 +33,6 @@ var getTable = function(tableName, callback) {
     callback(results);
   });
 };
-
-var query = function() {};
 
 module.exports = {
   messages: {
