@@ -4,6 +4,7 @@ var fs = require('fs');
 var dispatcher = require('httpdispatcher');
 var url = require('url');
 var _ = require('underscore');
+var models = require('./models');
 
 // Define headers
 var headers = {
@@ -29,7 +30,7 @@ var sendOptionsSuccess = function (req, res) {
 var requestHandler = function(request, response) {
   try {
     //log the request on console
-    console.log("Serving request type " + request.method + " for url " + request.url);
+    console.log("Serving request typeaaah " + request.method + " for url " + request.url);
     console.log(url.parse(request.url));
     if(request.method === "OPTIONS") {
       sendOptionsSuccess(request, response);
@@ -71,12 +72,33 @@ var append = function(path, theGreatAppendableObject) {
   });
 };
 
-dispatcher.onPost("/classes/messages", function( req, res) {
+dispatcher.onGet("/users", function(req, res) {
+  // console.log("request = ", req);
+  headers["Content-Type"] = "application/json";
+  models.users.get(function(users) {
+    res.writeHead(200, headers);
+    res.end(JSON.stringify(users));
+  });
+});
+
+dispatcher.onPost("/users", function(req, res) {
+
+  models.users.post(JSON.parse(req.body), function() {
+    headers["Content-Type"] = "text/plain";
+    res.writeHead(201, headers);
+    res.end('Successful stored Post Data');
+  });
+});
+
+dispatcher.onPost("/messages", function(req, res) {
+
   // console.log("request = ", req.body);
-  append(storagePath, req.body);
-  headers["Content-Type"] = "text/plain";
-  res.writeHead(201, headers);
-  res.end('Successful stored Post Data');
+  // append(storagePath, req.body);
+  models.messages.post(JSON.parse(req.body), function() {
+    headers["Content-Type"] = "text/plain";
+    res.writeHead(201, headers);
+    res.end('Successful stored Post Data');
+  });
 });
 
 dispatcher.onGet("/classes/messages/rooms", function(req, res){
@@ -111,21 +133,26 @@ dispatcher.onGet("/classes/messages/rooms", function(req, res){
 
 });
 
-dispatcher.onGet("/classes/messages", function( req, res) {
+dispatcher.onGet("/messages", function(req, res) {
   // console.log("request = ", req);
   headers["Content-Type"] = "application/json";
-
-  fs.readFile(storagePath, 'utf8', function (err, data) {
-    if( err) {
-      throw err;
-    }
-    var returnObj = {};
-    returnObj['results'] = JSON.parse(data);
-
-    console.log('Data to send: ' + returnObj);
+  models.messages.get(function(messages) {
     res.writeHead(200, headers);
-    res.end(JSON.stringify(returnObj));
+    res.end(JSON.stringify(messages));
   });
+
+
+  // fs.readFile(storagePath, 'utf8', function (err, data) {
+  //   if( err) {
+  //     throw err;
+  //   }
+  //   var returnObj = {};
+  //   returnObj['results'] = JSON.parse(data);
+
+  //   console.log('Data to send: ' + returnObj);
+  //   res.writeHead(200, headers);
+  //   res.end(JSON.stringify(returnObj));
+  // });
 });
 
-exports.requestHandler = requestHandler;
+module.exports = requestHandler;

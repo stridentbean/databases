@@ -1,37 +1,11 @@
 var db = require('../db');
 var mysql = require('mysql');
+var connection = require('../db/index');
 
-var getConnection = function() {
-   var dbConnection = mysql.createConnection({
-      user: "root",
-      password: "",
-      database: "chat"
-    });
-    dbConnection.connect();
-    return dbConnection;
-}
-
-var query = function(qs, callback) {
-  var db = getConnection();
-  var q = db.query(qs, function(err, result) {
-    if (err) return console.error(err);
-    callback(result);
-  });
-  console.log(q.sql);
-  //db.query(queryString).then(function(){console.log(results)})
-};
 
 var getTable = function(tableName, callback) {
-  var db = getConnection();
-  var queryString = "SELECT * FROM " + tableName;
+  connection.query("SELECT * FROM " + tableName, callback);
   //db.query(queryString).then(function(){console.log(results)})
-  var query = db.query(queryString, function(err, results) {
-    if(err) {
-      return console.log(err);
-    }
-    console.log(results);
-    callback(results);
-  });
 };
 
 module.exports = {
@@ -40,52 +14,47 @@ module.exports = {
       getTable("Message", callback);
     },
     post: function (message, callback) {
-      module.exports.users.getId(message.username, function(userId) {
-
-        message.userId = userId;
+      module.exports.users.getUserWithId(message.username, function(user) {
+        console.log('user: ', user);
+        message.userId = user[0].id;
         delete message.username;
 
-        var db = getConnection();
-        var queryString = "INSERT INTO MESSAGE SET ?";
-        var query = db.query(queryString, message, function(err, result) {
-          if(err) return console.log(err);
-          if (callback) callback(result);
-        });
-        console.log(query.sql);
+        connection.query("INSERT INTO MESSAGE SET ?", callback, message);
+        // var query = db.query(queryString, message, function(err, result) {
+        //   if(err) return console.log(err);
+        //   if (callback) callback(result);
+        // });
+        // console.log(query.sql);
       });
     } // a function which can be used to insert a message into the database
   },
 
   users: {
-    getId: function (username, callback) {
-      var db = getConnection();
-      var queryString = "SELECT id FROM User WHERE ?";
-      var query = db.query(queryString, {username: username}, function(err, result) {
-        if (err) return console.log(err);
-        if (callback) callback(result[0].id);
-      });
-      console.log(query.sql);
+    getUserWithId: function (username, callback) {
+      // callback = function(result) { result[0].id; };
+      connection.query("SELECT id FROM User WHERE ?", callback, {username: username});
+      // var query = db.query(queryString, {username: username}, function(err, result) {
+      //   if (err) return console.log(err);
+      //   if (callback) callback(result[0].id);
+      // });
+      // console.log(query.sql);
 
     },
     get: function (callback) {
-      var db = getConnection();
-      var queryString = "SELECT * FROM User";
-      //db.query(queryString).then(function(){console.log(results)})
-      var query = db.query(queryString, function(err, results) {
-        if (err) return console.log(err);
-        callback(results);
-      });
-
+      connection.query("SELECT * FROM User", callback);
+      // var query = db.query(queryString, function(err, results) {
+      //   if (err) return console.log(err);
+      //   callback(results);
+      // });
     },
 
-    post: function (username, callback) {
-      var db = getConnection();
-      var queryString = "INSERT INTO User SET ?";
-      var query = db.query(queryString, {username: username}, function(err, result) {
-        if(err) return console.log(err);
-        if (callback) callback(result);
-      });
-      console.log(query.sql);
+    post: function (userObj, callback) {
+      connection.query("INSERT INTO User SET ?", callback, userObj);
+      // var query = db.query(queryString, {username: username}, function(err, result) {
+      //   if(err) return console.log(err);
+      //   if (callback) callback(result);
+      // });
+      // console.log(query.sql);
     }
   }
 };
