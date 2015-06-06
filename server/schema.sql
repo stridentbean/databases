@@ -1,3 +1,4 @@
+SET FOREIGN_KEY_CHECKS=0;
 DROP DATABASE IF EXISTS chat;
 CREATE DATABASE chat;
 
@@ -21,6 +22,7 @@ CREATE TABLE User (
 );
 
 ALTER TABLE Message ADD FOREIGN KEY (userId) REFERENCES User (`id`);
+
 
 /* Create other tables and define schemas for them here! */
 

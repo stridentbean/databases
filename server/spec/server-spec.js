@@ -4,6 +4,7 @@
 var mysql = require('mysql');
 var request = require("request"); // You might need to npm install the request module!
 var expect = require('../../node_modules/chai/chai').expect;
+var models = require('../models/index');
 
 describe("Persistent Node Chat Server", function() {
   var dbConnection;
@@ -22,12 +23,38 @@ describe("Persistent Node Chat Server", function() {
 
     /* Empty the db table before each test so that multiple tests
      * (or repeated runs of the tests) won't screw each other up: */
-    dbConnection.query("truncate " + tableUser, done);
-    dbConnection.query("truncate " + tableMessage, done);
+    // dbConnection.query("truncate " + tableMessage, done);
+    // dbConnection.query("truncate " + tableUser, done);
+    dbConnection.query("DELETE FROM " + tableMessage);
+    dbConnection.query("DELETE FROM " + tableUser, done);
+    //dbConnection.query(
   });
 
   afterEach(function() {
     dbConnection.end();
+  });
+
+  it("should post a message to the db", function(done) {
+    models.users.post('dani', function() {
+
+      models.messages.post({username: 'dani', text: 'hello world'}, function() {
+        models.messages.get(function(messages) {
+          expect(messages[0].text).to.equal('hello world');
+          //expect(messages[0].userId).to.be.true);
+          done();
+        });
+      });
+    });
+  });
+
+  it("Should get all users in database", function(done) {
+
+    models.users.post('dani', function() {
+      models.users.get(function(users) {
+        expect(users.length).to.equal(1);
+        done();
+      });
+    });
   });
 
   it("Should insert posted messages to the DB", function(done) {
